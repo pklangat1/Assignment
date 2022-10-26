@@ -1,0 +1,662 @@
+---
+title: "Telecom Customer Retention | Philemon K Langat"
+output:
+  html_document:
+    df_print: paged
+---
+
+#1. DEFINING THE QUESTION
+
+#a) Specifying the Data Analysis Question
+
+The management would like to get your assistance in understanding the current subscribed customers. Your recommendations informed by your analysis will help them make informed decisions on effective customer retention programs.
+
+To put it simply, the task is to understand current customers in order to understand how to retain them.
+
+#b) Defining the Metric for Success
+
+The solution will have satisfied the research question when you can identify the factors that contribute to customer churn.
+
+#c) Understanding the context
+
+MTN Telecom offers mobile and internet services to its customers. These services include phone, multiple lines, internet, online security, online backup, device protection, tech support, and streaming TV and movies.
+
+You have been provided with the current customer data. Since you will be working towards a descriptive report than a predictive one, you decide to think critically of the kind of questions that would help you craft customer retention programs. You then later use the given data set to answer your questions but before you start, you reading, explore, clean and visualize your dataset.
+
+#d) Recording the Experimental Design
+
+The steps to be taken include:
+
+1.Import data set and preview its summarized information to get a feel of what you will be working with.
+2.Carry out data cleaning.
+3.Carry out data analysis.
+4.Interpret results.
+5.Provide recommendations based on results of analysis.
+6.Challenge your solution.
+
+#e) Data Relevance
+
+For now, the data we have contains churn data which will be critical for our research specific analysis.
+
+#2. DATA CLEANING AND PREPARATION
+
+#a)install and load libraries
+
+```{r}
+install.packages("tidyverse")
+```
+
+```{r}
+library(tidyverse)
+```
+
+#b)Import the dataset 
+```{r}
+subscribers_df <- read.csv("https://bit.ly/2ZlpzjF")
+head(subscribers_df)
+
+```
+
+#c)Getting dataset shape
+```{r}
+dim(subscribers_df)
+
+```
+```{r}
+#Check a guick glimpse at the subscribers variable name and datatypes.
+glimpse(subscribers_df)
+```
+
+#d)Checking for duplicates and drop them if any
+```{r}
+#customer_df[duplicated(customer_df), ] ..7 duplicate records found
+subscribers_df1 <- subscribers_df %>% distinct()
+dim(subscribers_df1)
+```
+
+#e)Checking for missing values and drop them if any
+```{r}
+colSums(is.na(subscribers_df1))
+subscribers_df1 <- na.omit(subscribers_df1)
+dim(subscribers_df1)
+
+```
+
+#f)Properly formatting columns to lowercase 
+```{r}
+
+names(subscribers_df1) <- trimws(names(subscribers_df1), which = c("both"))
+names(subscribers_df1) <- tolower(names(subscribers_df1))
+names(subscribers_df1)
+
+```
+
+#g)previewing the number of unique values in each column
+```{r}
+unique(subscribers_df1)
+```
+
+#h)Checking the datatypes
+```{r}
+glimpse(subscribers_df1)
+str(subscribers_df1)
+```
+#i)create a loop to preview the unique values of variables 
+```{r}
+cols1 <- names(subscribers_df1)
+#cols1
+rem1 <- c('customerid', 'tenure', 'monthlycharges', 'totalcharges')
+cols1[- c(1,6,19,20)] 
+out1 <- "\nShowing unique values of variable:"
+
+for (x in cols1){
+   cat(out1,x)
+   #unique(cust1_df[[toString(x)]])
+}
+
+
+```
+
+We can see that some variables aren't quite right when it comes to their unique values. For example:
+
+'senior_citizen' should be a boolean object (Yes/No), not a float binary (0.0/0.1)
+'payment_method' has values with spelling errors such as "Mailed checkkk" and "Electronic chekk", which created duplicates
+
+#j)resolving the issues in the 'senior_citizen' variable
+
+```{r}
+subscribers_df1$seniorcitizen[subscribers_df1$seniorcitizen == 0] <- 'No'
+subscribers_df1$seniorcitizen[subscribers_df1$seniorcitizen == 1] <- 'Yes'
+head(subscribers_df1)
+#unique(cust1_df$seniorcitizen)
+```
+
+#k)# resolving the issues in the 'payment_method' variable
+```{r}
+subscribers_df1$paymentmethod[subscribers_df1$paymentmethod == "Mailed checkkk"] <- "Mailed check"
+subscribers_df1$paymentmethod[subscribers_df1$paymentmethod == "Electronic checkk"] <- "Electronic check"
+#head(cust1_df)
+unique(subscribers_df1$paymentmethod)
+```
+
+#l)# visual distribution of the outliers using a box plot for the 'tenure', 'monthly_charges' and 'total_charges'
+```{r}
+# Plotting the Tenure chart
+ggplot(subscribers_df1, aes(y=tenure)) +
+  geom_boxplot(fill = "red", outlier.colour = "#1F3552", outlier.shape = 20) +
+  stat_boxplot(geom ="errorbar") +
+  scale_x_discrete() +
+  labs(
+    title = "Boxplot of Tenure",
+    y = "Tenure"
+  ) + theme_classic() +
+  theme(
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5), 
+    axis.title.x = element_text(size = 10), 
+  ) + coord_flip()
+```
+
+```{r}
+# Plotting the Month charges chart
+ggplot(subscribers_df1, aes(y=monthlycharges)) +
+  geom_boxplot(fill = "red", outlier.colour = "#1F3552", outlier.shape = 20) +
+  stat_boxplot(geom ="errorbar") +
+  scale_x_discrete() +
+  labs(
+    title = "Boxplot of Monthly Charges",
+    y = "Monthly Charges"
+  ) + theme_classic() +
+  theme(
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5), 
+    axis.title.x = element_text(size = 10), 
+  ) + coord_flip()
+```
+
+```{r}
+# Plotting the total charges chart
+ggplot(subscribers_df1, aes(y=totalcharges)) +
+  geom_boxplot(fill = "red", outlier.colour = "#1F3552", outlier.shape = 20) +
+  stat_boxplot(geom ="errorbar") +
+  scale_x_discrete() +
+  labs(
+    title = "Boxplot of Total Charges",
+    y = "Total Charges"
+  ) + theme_classic() +
+  theme(
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5), 
+    axis.title.x = element_text(size = 10), 
+  ) + coord_flip()
+```
+
+We can see that there are several outliers in the 'tenure', 'monthly_charges', and 'total_charges' variables. 
+We can remove them using the IQR method.
+
+#m)Calculate IQRs and remove outliers 
+
+```{r}
+
+outliers <- function(x) {
+
+  Q1 <- quantile(x, probs=.25)
+  Q3 <- quantile(x, probs=.75)
+  iqr = Q3-Q1
+
+ upper_limit = Q3 + (iqr*1.5)
+ lower_limit = Q1 - (iqr*1.5)
+
+ x > upper_limit | x < lower_limit
+}
+
+remove_outliers <- function(df, cols = names(df)) {
+  for (col in cols) {
+    df <- df[!outliers(df[[col]]),]
+  }
+  df
+}
+
+cust1_NO <- remove_outliers(subscribers_df1, c('tenure', 'monthlycharges', 'totalcharges'))
+dim(cust1_NO)
+
+```
+We have cleaned our data and are now ready to analyze it. 
+
+#3. DATA ANALYSIS
+Since our research question requires us to focus on how we can retain customers, the main variable to work with is the "churn" variable.
+
+#i) Research-specific Analysis
+What percentage of customers from our dataset churned?
+```{r}
+clean_df <- cust1_NO
+#dim(clean_df)
+
+library(sqldf)
+
+yesno_df <- sqldf("select 
+              sum(Churn = 'No') as No,
+              sum(Churn = 'Yes') as Yes
+       from clean_df
+       ")
+
+yesno_df$Total <- yesno_df$No + yesno_df$Yes
+
+test <- table(clean_df$churn)
+#yesno_df
+
+pie(test,labels = paste0(test/yesno_df$Total * 100, "%"))
+
+
+```
+
+We see that the majority of the customers in this dataset, 73% of the customers are still subscribed to MTN while 26.6% of the customers churned.
+
+#b) let's now make a comparison betweeen male and female subscribers by plotting the distribution of churn by gender
+```{r}
+tbl <- with(clean_df, table(gender, churn))
+
+barplot(tbl, beside = TRUE, legend = TRUE, main = "Distribution of churn by gender")
+
+
+```
+
+OBSERVATION: Number of men who churned practically equal to number of women who churned
+
+#c) we investigate the distribution of churn by senior citizen and recording our observations plotting the distribution of churn by senior citizen below
+```{r}
+
+senior_df <- sqldf("select 
+              seniorcitizen,
+              churn
+            from clean_df where seniorcitizen='Yes'
+       ")
+tbl2 <- with(senior_df, table(seniorcitizen, churn))
+
+barplot(tbl2, beside = TRUE, legend = TRUE, main = "Distribution of churn by senior citizens ")
+
+```
+
+OBSERVATION: Fewer senior citizens churned than those who remained loyal customers 
+
+#d) plotting the distribution of churn by partner and recording our observations. Let's plot the distribution of churn by partner
+```{r}
+
+tbl3 <- with(clean_df, table(partner, churn))
+
+barplot(tbl3, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by partners ")
+```
+
+
+
+OBSERVATION: Number of churns among customers with partners was less than among customers without partners
+
+#e) plotting the distribution of churn by dependents and then record your observations.
+```{r}
+
+tbl5 <- with(clean_df, table(dependents, churn))
+
+barplot(tbl5, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by dependents ")
+
+```
+
+OBSERVATION:: customers with no dependents are the higher demographic in retained customer base.
+
+#f) plotting the distribution of churn by phone service then recording your observations.
+
+```{r}
+
+tbl7 <- with(clean_df, table(phoneservice, churn))
+
+barplot(tbl7, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by phone service ")
+
+```
+OBSERVATION: Having active phone service aids in customer retention
+
+#g) plotting the distribution of churn by multiple lines and record our observations.
+
+```{r}
+tbl9 <- with(clean_df, table(multiplelines, churn))
+
+barplot(tbl9, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by multiple lines ")
+```
+OBSERVATION:: Among customers who churned, number of those who have multiple lines and those who do not have multiple lines is equal
+
+#h) plotting the distribution of churn by internet service and later record our observations.
+```{r}
+tbl11 <- with(clean_df, table(internetservice, churn))
+
+barplot(tbl11, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by internet service ")
+```
+OBSERVATION: Among churned customers, customers on fiber optic internet service were most prevalent
+
+#i) plotting the distribution of churn by online security and then record our observations below:
+
+```{r}
+
+tbl13 <- with(clean_df, table(onlinesecurity, churn))
+
+barplot(tbl13, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by online security ")
+
+```
+OBSERVATION:: In churned customers group, those with no online security service were the most
+
+#j) plotting the distribution of churn by online backup
+
+```{r}
+
+tbl15 <- with(clean_df, table(onlinebackup, churn))
+
+barplot(tbl15, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by online backup ")
+
+```
+OBSERVATION:: Among churned customers, those with no online backup service were the most
+
+#k) plotting the distribution of churn by device protection
+```{r}
+tbl17 <- with(clean_df, table(deviceprotection, churn))
+
+barplot(tbl17, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by device protection ")
+
+```
+OBSERVATION::Among churned customers, those with no device protection were the most
+
+#l) plotting the distribution of churn by tech support
+
+```{r}
+tbl19 <- with(clean_df, table(techsupport, churn))
+
+barplot(tbl19, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by techsupport ")
+
+```
+OBSERVATION: Among churned customers, those with no techsupport were the most
+
+#m) plotting the distribution of churn by streaming tv
+```{r}
+tbl21 <- with(clean_df, table(streamingtv, churn))
+
+barplot(tbl21, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by streamingTV ")
+
+```
+
+OBSERVATION:: AMong churned customers, those with no streaming TV service were the most
+
+#n) plotting the distribution of churn by streaming movies
+```{r}
+tbl23 <- with(clean_df, table(streamingmovies, churn))
+
+barplot(tbl23, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by streaming movies ")
+
+```
+
+OBSERVATION:: Among the churned customers, those without streaming movies service were the most
+
+#o) plotting the distribution of churn by contract
+```{r}
+tbl25 <- with(clean_df, table(contract, churn))
+
+barplot(tbl25, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by contract ")
+
+```
+OBSERVATION:: Customers on month-to-month plan are the most among churners
+
+#p) plotting the distribution of churn by paperless billing
+```{r}
+tbl27 <- with(clean_df, table(paperlessbilling, churn))
+
+barplot(tbl27, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by paperless billing ")
+
+```
+OBSERVATION:: Customers on paperless billing were higher among the churned customers group
+
+#q) plotting the distribution of churn by payment method
+
+```{r}
+tbl29 <- with(clean_df, table(paymentmethod, churn))
+
+barplot(tbl29, beside = TRUE, legend = TRUE, main = "Distribution of churn customers by payment method ")
+
+```
+OBSERVATION:: Customers who paid via electronic check were the most in the churned group
+
+#ii) General Analysis
+
+#a)# previewing our data set's gender distribution
+```{r}
+tbl31 <- with(clean_df, table(gender))
+
+barplot(tbl31, beside = TRUE, legend = TRUE, main = "Distribution of gender ")
+```
+We observe that the number of male and female subscribers is almost the same.
+
+#b)  plotting distribution of senior citizens
+```{r}
+tbl32 <- with(clean_df, table(seniorcitizen))
+
+barplot(tbl32, beside = TRUE, legend = TRUE, main = "Distribution of Senior Citizens ")
+```
+We observe the following - few subscribers are senior citizens
+
+
+#c) Plotting a distribution of subscribers with partners and those without
+
+```{r}
+tbl33 <- with(clean_df, table(partner))
+
+barplot(tbl33, beside = TRUE, legend = TRUE, main = "Distribution of Partner ")
+```
+
+OBSERVATION::Customers without partner are slightly more than those with partners
+
+#d) plotting a distribution of customers with dependents and those without
+
+```{r}
+tbl34 <- with(clean_df, table(dependents))
+
+barplot(tbl34, beside = TRUE, legend = TRUE, main = "Distribution of dependents ")
+```
+
+OBSERVATION:: Majority of the subscribers do not have dependents.
+
+#e) Plotting a distribution by tenure
+```{r}
+tbl35 <- with(clean_df, table(tenure))
+
+barplot(tbl35, beside = TRUE, main = "Distribution of tenure ")
+```
+
+
+OBSERVATION:: We observe that the majority have tenure of 1-5 followed by those with tenure between 67-72.
+
+#f) plotting distribution of phone service
+
+```{r}
+tbl36 <- with(clean_df, table(phoneservice))
+
+barplot(tbl36, beside = TRUE, legend = TRUE, main = "Distribution of phone service ")
+```
+
+OBSERVATION::Majority of customer base has an active phone service 
+
+#g) Plotting a distribution of multiple lines
+
+```{r}
+tbl37 <- with(clean_df, table(multiplelines))
+
+barplot(tbl37, beside = TRUE, main = "Distribution of multiple lines ")
+```
+
+OBSERVATION::Customers without multiple lines are the highest group
+
+#h) plotting distribution of internet service
+
+```{r}
+tbl38 <- with(clean_df, table(internetservice))
+
+barplot(tbl38, beside = TRUE, legend = TRUE, main = "Distribution of internet service ")
+```
+
+OBSERVATION:: We observe the following: Many have fiber optic, about three quarters of the same number have DSL, and roughly half of that number do not have internet service.
+
+#i) plotting a distribution of online security
+```{r}
+
+tbl39 <- with(clean_df, table(onlinesecurity))
+
+barplot(tbl39, beside = TRUE, legend = TRUE, main = "Distribution of online security ")
+
+```
+
+
+OBSERVATION:: Majority of the subscribers do not have online security while half of that number has. Fewer still have online security but no internet service.
+
+#j) plotting distribution of online backup
+
+```{r}
+tbl40 <- with(clean_df, table(onlinebackup))
+
+barplot(tbl40, beside = TRUE, main = "Distribution of online backup ")
+
+```
+
+OBSERVATION:: We observe the following: Majority of the customers do not have online backup. Almost the same number has, while fewer have online backup but no internet service.
+
+
+#k) plotting distribution of device protection
+```{r}
+tbl41 <- with(clean_df, table(deviceprotection))
+
+barplot(tbl41, beside = TRUE, main = "Distribution of device protection ")
+
+```
+
+
+OBSERVATION::Majority do not have device protection.
+
+#l) plotting a distribution of tech support
+
+```{r}
+tbl42 <- with(clean_df, table(techsupport))
+
+barplot(tbl42, beside = TRUE, legend = TRUE, main = "Distribution of tech support ")
+
+```
+
+OBSERVATION::Subscribers who do not receive tech support make up almost half of the data set.
+
+#m) plotting a distribution of streaming_tv
+
+```{r}
+tbl43 <- with(clean_df, table(streamingtv))
+
+barplot(tbl43, beside = TRUE, main = "Distribution of streaming TV ")
+
+```
+
+OBSERVATION:: The number of customers who stream TV and those who do not are almost the same. The number of customers who stream TV but don't have internet service is the least.
+
+#n) plotting a distribution of streaming movies
+```{r}
+tbl44 <- with(clean_df, table(streamingmovies))
+
+barplot(tbl44, beside = TRUE, main = "Distribution of streaming movies ")
+
+```
+
+
+OBSERVATION:: The number of customers who stream movies and those who do not are almost the same. The number of customers who stream movies but don't have internet service is the least.
+
+#i) plotting a pie chart of contract
+
+```{r}
+tbl45 <- with(clean_df, table(contract))
+
+barplot(tbl45, beside = TRUE, main = "Distribution of contract ")
+
+```
+
+OBSERVATION:: Majority of the subscribers are on month-to-month contracts, followed by two-year contracts, and then one-year contracts.
+
+#j) plotting a pie chart of 'paperless_billing'
+
+```{r}
+tbl46 <- with(clean_df, table(paperlessbilling))
+
+barplot(tbl46, beside = TRUE, main = "Distribution of paperless billing ")
+
+```
+
+OBSERVATION::Customers on paperless billing are the majority
+
+#k) plotting a horizontal bar chart of payment method
+```{r}
+tbl47 <- with(clean_df, table(paymentmethod))
+
+barplot(tbl47, beside = TRUE, legend=TRUE, main = "Distribution of payment method")
+
+```
+
+
+OBSERVATION:: Electronic checks are the most popular form of payment while mailed checks, bank transfers, and credit cards are subsequently and similarly common.
+
+#l) plotting a distribution of monthly charges
+
+```{r}
+tbl48 <- with(clean_df, table(monthlycharges))
+
+barplot(tbl48, beside = TRUE, main = "Distribution of monthly charges ")
+
+```
+
+OBSERVATION::Bulk of customers lie within 18.25 - 30.1 monthly charges range
+
+#m) we plot a distribution plot (kde) of total charges
+```{r}
+tbl49 <- with(clean_df, table(totalcharges))
+
+#barplot(tbl49, beside = TRUE, main = "Distribution of total charges ")
+# Basic density
+#p <- ggplot(clean_df, aes(x=totalcharges)) + 
+#  geom_density() + geom_vline(aes(xintercept=mean(totalcharges)),
+#            color="blue", linetype="dashed", size=1)
+#p
+
+plot(density(clean_df$totalcharges), main="Total Charges density plot")
+
+abline(v = mean(clean_df$totalcharges), col = "red")
+abline(v = median(clean_df$totalcharges), col = "green")
+
+```
+
+
+OBSERVATION::Mean total charge is just above 2000/-. Bulk of customer total charges falls at 2000/- and below
+
+
+#4. SUMMARY OF FINDINGS
+
+Based on the results of the analysis, the following conclusions were arrived at:
+
+1-There is no significant difference in churn rate between male and female subscribers. So this is not an area management needs to worry about.
+2-Majority of the customers are not senior citizens so this makes this dataset biased and hard to identify whether being a senior citizen affects churn rate.
+3-Not having a partner increases the likelihood of churning.
+4-Not having dependents increases the likelihood of churning.
+5-Having active phone service aids in customer retention
+6-Customers on fiber optic internet service are most likely to churn 
+7-Customers without online security service have higher likelihood of churning
+8-Customers without online backup service are more likely to churn
+9-Customers without device protection more likely to churn than those who have device protection
+10-Customers without techsupport are more likely to churn than those who have tech support 
+
+
+#5. Recommendations
+
+In order to create an effective customer retention program, management should take the following measures:
+
+1-Finding more solutions to non-senior citizens.
+2-Finding more solutions subscribers by moderating on the partners and/or dependents since these people are less likely to churn. Alternatively, management can come up with services specifically designed for customers without partners and/or dependents. This would require additional research.
+
+
+
+
+
+
+
+
+
